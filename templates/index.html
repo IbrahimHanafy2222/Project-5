@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CIE 425 - BER Simulator</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 20px;
+      }
+
+      .container {
+        max-width: 1400px;
+        margin: 0 auto;
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        overflow: hidden;
+      }
+
+      .header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 30px;
+        text-align: center;
+      }
+
+      .header h1 {
+        font-size: 2.5em;
+        margin-bottom: 10px;
+      }
+
+      .header p {
+        font-size: 1.1em;
+        opacity: 0.9;
+      }
+
+      .main-content {
+        display: grid;
+        grid-template-columns: 400px 1fr;
+        gap: 30px;
+        padding: 30px;
+      }
+
+      .config-panel {
+        background: #f8f9fa;
+        padding: 25px;
+        border-radius: 15px;
+        border: 2px solid #e9ecef;
+      }
+
+      .config-section {
+        margin-bottom: 25px;
+      }
+
+      .config-section h3 {
+        color: #495057;
+        margin-bottom: 15px;
+        font-size: 1.1em;
+        border-bottom: 2px solid #667eea;
+        padding-bottom: 8px;
+      }
+
+      label {
+        display: block;
+        margin-bottom: 8px;
+        color: #495057;
+        font-weight: 500;
+      }
+
+      input[type="number"],
+      select {
+        width: 100%;
+        padding: 10px 15px;
+        border: 2px solid #dee2e6;
+        border-radius: 8px;
+        font-size: 1em;
+        transition: all 0.3s;
+      }
+
+      input[type="number"]:focus,
+      select:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+      }
+
+      .snr-inputs {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+      }
+
+      .checkbox-container {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 15px;
+      }
+
+      input[type="checkbox"] {
+        width: 20px;
+        height: 20px;
+        cursor: pointer;
+      }
+
+      .btn-simulate {
+        width: 100%;
+        padding: 15px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        border-radius: 10px;
+        font-size: 1.1em;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.3s;
+        margin-top: 20px;
+      }
+
+      .btn-simulate:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+      }
+
+      .btn-simulate:active {
+        transform: translateY(0);
+      }
+
+      .btn-simulate:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+
+      .btn-generate-all {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        margin-top: 10px;
+      }
+
+      .btn-generate-all:hover {
+        box-shadow: 0 10px 20px rgba(245, 87, 108, 0.3);
+      }
+
+      .results-panel {
+        background: #ffffff;
+        padding: 25px;
+        border-radius: 15px;
+        border: 2px solid #e9ecef;
+        min-height: 600px;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .results-panel h2 {
+        color: #495057;
+        margin-bottom: 20px;
+        font-size: 1.5em;
+      }
+
+      .placeholder {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #adb5bd;
+        font-size: 1.2em;
+        text-align: center;
+      }
+
+      .plot-container {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .plot-container img {
+        max-width: 100%;
+        width: 100%;
+        height: auto;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+      }
+
+      .figure-section img {
+        max-width: 100%;
+        width: 100%;
+        height: auto;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+
+      .all-figures-container {
+        display: none;
+      }
+
+      .figure-section {
+        margin-bottom: 30px;
+        border: 2px solid #e9ecef;
+        border-radius: 10px;
+        padding: 20px;
+        background: #f8f9fa;
+      }
+
+      .figure-section h3 {
+        color: #667eea;
+        margin-bottom: 15px;
+        font-size: 1.3em;
+      }
+
+      .summary-table {
+        width: 100%;
+        margin-top: 20px;
+        border-collapse: collapse;
+        background: white;
+        border-radius: 8px;
+        overflow: hidden;
+      }
+
+      .summary-table th,
+      .summary-table td {
+        padding: 12px;
+        text-align: left;
+        border-bottom: 1px solid #dee2e6;
+      }
+
+      .summary-table th {
+        background: #667eea;
+        color: white;
+        font-weight: 600;
+      }
+
+      .summary-table tr:last-child td {
+        border-bottom: none;
+      }
+
+      .summary-table tr:hover {
+        background: #f8f9fa;
+      }
+
+      .loading {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        border: 3px solid rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        border-top-color: white;
+        animation: spin 1s ease-in-out infinite;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      .info-text {
+        font-size: 0.9em;
+        color: #6c757d;
+        margin-top: 5px;
+        font-style: italic;
+      }
+
+      .tabs {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+        border-bottom: 2px solid #e9ecef;
+      }
+
+      .tab {
+        padding: 12px 24px;
+        background: transparent;
+        border: none;
+        border-bottom: 3px solid transparent;
+        color: #6c757d;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
+      }
+
+      .tab:hover {
+        color: #667eea;
+      }
+
+      .tab.active {
+        color: #667eea;
+        border-bottom-color: #667eea;
+      }
+
+      .tab-content {
+        display: none;
+      }
+
+      .tab-content.active {
+        display: block;
+      }
+
+      @media (max-width: 1024px) {
+        .main-content {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>📡 BER Simulation Tool</h1>
+        <p>CIE 425 - Infomation Theory and Coding</p>
+      </div>
+
+      <div class="main-content">
+        <!-- Configuration Panel -->
+        <div class="config-panel">
+          <div class="config-section">
+            <h3>SNR Range (Eb/N0 in dB)</h3>
+            <div class="snr-inputs">
+              <div>
+                <label>Min</label>
+                <input
+                  type="number"
+                  id="snr_min"
+                  value="0"
+                  min="-10"
+                  max="30"
+                />
+              </div>
+              <div>
+                <label>Max</label>
+                <input
+                  type="number"
+                  id="snr_max"
+                  value="15"
+                  min="-10"
+                  max="30"
+                />
+              </div>
+              <div>
+                <label>Step</label>
+                <input
+                  type="number"
+                  id="snr_step"
+                  value="1"
+                  min="0.5"
+                  step="0.5"
+                  max="5"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div class="config-section">
+            <h3>Channel Type</h3>
+            <select id="channel_type" onchange="updateCodingOptions()">
+              <option value="awgn">AWGN Channel</option>
+              <option value="rayleigh">Rayleigh Fading Channel</option>
+            </select>
+          </div>
+
+          <div class="config-section" id="coding-section" style="display: none">
+            <h3>Channel Coding</h3>
+            <div class="checkbox-container">
+              <input
+                type="checkbox"
+                id="use_coding"
+                onchange="updateCodeOptions()"
+              />
+              <label for="use_coding" style="margin: 0"
+                >Enable Channel Coding</label
+              >
+            </div>
+
+            <div id="code-options" style="display: none">
+              <label>Code Type</label>
+              <select id="code_type" onchange="updateCodeParams()">
+                <option value="repetition">Repetition Code</option>
+                <option value="hamming">Hamming Code</option>
+              </select>
+
+              <div id="rep-params" style="margin-top: 15px">
+                <label>Repetition Factor (n)</label>
+                <input type="number" id="rep_n" value="3" min="3" step="2" />
+                <p class="info-text">Code rate: 1/n (k=1)</p>
+              </div>
+
+              <div id="ham-params" style="margin-top: 15px; display: none">
+                <label>Hamming Parameter (m)</label>
+                <select id="hamming_m" onchange="updateHammingInfo()">
+                  <option value="3">m=3: (7,4) Hamming Code</option>
+                  <option value="4">m=4: (15,11) Hamming Code</option>
+                </select>
+                <p class="info-text" id="hamming-info">n=7, k=4 (n-k=3)</p>
+              </div>
+            </div>
+          </div>
+
+          <button class="btn-simulate" onclick="runSimulation()" id="sim-btn">
+            🚀 Run Single Simulation
+          </button>
+
+          <button
+            class="btn-simulate btn-generate-all"
+            onclick="generateAllFigures()"
+            id="gen-all-btn"
+          >
+            📊 Generate All 3 Figures
+          </button>
+        </div>
+
+        <!-- Results Panel -->
+        <div class="results-panel">
+          <div class="tabs">
+            <button class="tab active" onclick="switchTab('single')">
+              Single Simulation
+            </button>
+            <button class="tab" onclick="switchTab('all')">All Figures</button>
+          </div>
+
+          <!-- Single Simulation Tab -->
+          <div id="single-tab" class="tab-content active">
+            <h2>BER Performance Curve</h2>
+            <div class="placeholder" id="placeholder">
+              <div>
+                <p>📊 Configure parameters and click "Run Single Simulation"</p>
+                <p style="font-size: 0.9em; margin-top: 10px">
+                  Or click "Generate All 3 Figures" for complete analysis
+                </p>
+              </div>
+            </div>
+            <div
+              class="plot-container"
+              id="plot-container"
+              style="display: none"
+            >
+              <img id="plot-img" src="" alt="BER Plot" />
+            </div>
+          </div>
+
+          <!-- All Figures Tab -->
+          <div id="all-tab" class="tab-content">
+            <h2>Complete BER Analysis - All Figures</h2>
+            <div class="placeholder" id="all-placeholder">
+              <div>
+                <p>
+                  📊 Click "Generate All 3 Figures" to start comprehensive
+                  analysis
+                </p>
+              </div>
+            </div>
+            <div class="all-figures-container" id="all-figures">
+              <div class="figure-section">
+                <h3>Figure 1: AWGN vs Rayleigh (No Coding)</h3>
+                <img id="fig1-img" src="" alt="Figure 1" />
+              </div>
+
+              <div class="figure-section">
+                <h3>Figure 2: Channel Coding Cases (4 Cases)</h3>
+                <img id="fig2-img" src="" alt="Figure 2" />
+              </div>
+
+              <div class="figure-section">
+                <h3>Figure 3: Complete Comparison (Coded vs Uncoded)</h3>
+                <img id="fig3-img" src="" alt="Figure 3" />
+              </div>
+
+              <div class="figure-section">
+                <h3>Summary: BER at 10 dB</h3>
+                <table class="summary-table" id="summary-table">
+                  <thead>
+                    <tr>
+                      <th>System</th>
+                      <th>BER @ 10dB</th>
+                      <th>Code Rate</th>
+                    </tr>
+                  </thead>
+                  <tbody id="summary-tbody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      function switchTab(tab) {
+        const tabs = document.querySelectorAll(".tab");
+        const contents = document.querySelectorAll(".tab-content");
+
+        tabs.forEach((t) => t.classList.remove("active"));
+        contents.forEach((c) => c.classList.remove("active"));
+
+        if (tab === "single") {
+          tabs[0].classList.add("active");
+          document.getElementById("single-tab").classList.add("active");
+        } else {
+          tabs[1].classList.add("active");
+          document.getElementById("all-tab").classList.add("active");
+        }
+      }
+
+      function updateCodingOptions() {
+        const channelType = document.getElementById("channel_type").value;
+        const codingSection = document.getElementById("coding-section");
+
+        if (channelType === "rayleigh") {
+          codingSection.style.display = "block";
+        } else {
+          codingSection.style.display = "none";
+          document.getElementById("use_coding").checked = false;
+          updateCodeOptions();
+        }
+      }
+
+      function updateCodeOptions() {
+        const useCoding = document.getElementById("use_coding").checked;
+        const codeOptions = document.getElementById("code-options");
+
+        if (useCoding) {
+          codeOptions.style.display = "block";
+          updateCodeParams();
+        } else {
+          codeOptions.style.display = "none";
+        }
+      }
+
+      function updateCodeParams() {
+        const codeType = document.getElementById("code_type").value;
+        const repParams = document.getElementById("rep-params");
+        const hamParams = document.getElementById("ham-params");
+
+        if (codeType === "repetition") {
+          repParams.style.display = "block";
+          hamParams.style.display = "none";
+        } else {
+          repParams.style.display = "none";
+          hamParams.style.display = "block";
+          updateHammingInfo();
+        }
+      }
+
+      function updateHammingInfo() {
+        const m = parseInt(document.getElementById("hamming_m").value);
+        const n = Math.pow(2, m) - 1;
+        const k = n - m;
+        document.getElementById(
+          "hamming-info"
+        ).textContent = `n=${n}, k=${k} (n-k=${m})`;
+      }
+
+      async function runSimulation() {
+        const btn = document.getElementById("sim-btn");
+        const placeholder = document.getElementById("placeholder");
+        const plotContainer = document.getElementById("plot-container");
+
+        const config = {
+          channel_type: document.getElementById("channel_type").value,
+          use_coding: document.getElementById("use_coding").checked,
+          code_type: document.getElementById("code_type").value,
+          snr_min: parseFloat(document.getElementById("snr_min").value),
+          snr_max: parseFloat(document.getElementById("snr_max").value),
+          snr_step: parseFloat(document.getElementById("snr_step").value),
+        };
+
+        if (config.use_coding) {
+          if (config.code_type === "repetition") {
+            config.code_param = parseInt(
+              document.getElementById("rep_n").value
+            );
+          } else {
+            config.code_param = parseInt(
+              document.getElementById("hamming_m").value
+            );
+          }
+        }
+
+        btn.disabled = true;
+        btn.innerHTML = '<span class="loading"></span> Simulating...';
+        placeholder.style.display = "flex";
+        placeholder.innerHTML =
+          '<div><p>⚙️ Running simulation...</p><p style="font-size: 0.9em; margin-top: 10px;">This may take a moment</p></div>';
+        plotContainer.style.display = "none";
+
+        try {
+          const response = await fetch("/simulate", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(config),
+          });
+
+          const result = await response.json();
+
+          document.getElementById("plot-img").src =
+            "data:image/png;base64," + result.plot_url;
+          placeholder.style.display = "none";
+          plotContainer.style.display = "flex";
+        } catch (error) {
+          console.error("Error:", error);
+          placeholder.innerHTML =
+            '<div><p>❌ Simulation failed</p><p style="font-size: 0.9em; margin-top: 10px;">Please try again</p></div>';
+        } finally {
+          btn.disabled = false;
+          btn.innerHTML = "🚀 Run Single Simulation";
+        }
+      }
+
+      async function generateAllFigures() {
+        const btn = document.getElementById("gen-all-btn");
+        const allPlaceholder = document.getElementById("all-placeholder");
+        const allFigures = document.getElementById("all-figures");
+
+        // Switch to All Figures tab
+        switchTab("all");
+
+        const config = {
+          snr_min: parseFloat(document.getElementById("snr_min").value),
+          snr_max: parseFloat(document.getElementById("snr_max").value),
+          snr_step: parseFloat(document.getElementById("snr_step").value),
+        };
+
+        btn.disabled = true;
+        btn.innerHTML =
+          '<span class="loading"></span> Generating All Figures...';
+        allPlaceholder.style.display = "flex";
+        allPlaceholder.innerHTML =
+          '<div><p>⚙️ Generating all 3 figures...</p><p style="font-size: 0.9em; margin-top: 10px;">This will take ~30 seconds</p></div>';
+        allFigures.style.display = "none";
+
+        try {
+          const response = await fetch("/generate_all_figures", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(config),
+          });
+
+          const result = await response.json();
+
+          // Display all figures
+          document.getElementById("fig1-img").src =
+            "data:image/png;base64," + result.figure1;
+          document.getElementById("fig2-img").src =
+            "data:image/png;base64," + result.figure2;
+          document.getElementById("fig3-img").src =
+            "data:image/png;base64," + result.figure3;
+
+          // Display summary table
+          const tbody = document.getElementById("summary-tbody");
+          tbody.innerHTML = "";
+
+          const rates = {
+            "AWGN (No Coding)": "1",
+            "Rayleigh (No Coding)": "1",
+            "Repetition (1/3)": "1/3",
+            "Repetition (1/5)": "1/5",
+            "Hamming (7,4)": "4/7",
+            "Hamming (15,11)": "11/15",
+          };
+
+          for (const [system, ber] of Object.entries(result.summary)) {
+            const row = tbody.insertRow();
+            row.insertCell(0).textContent = system;
+            row.insertCell(1).textContent = ber;
+            row.insertCell(2).textContent = rates[system];
+          }
+
+          allPlaceholder.style.display = "none";
+          allFigures.style.display = "block";
+        } catch (error) {
+          console.error("Error:", error);
+          allPlaceholder.innerHTML =
+            '<div><p>❌ Generation failed</p><p style="font-size: 0.9em; margin-top: 10px;">Please try again</p></div>';
+        } finally {
+          btn.disabled = false;
+          btn.innerHTML = "📊 Generate All 3 Figures";
+        }
+      }
+
+      // Initialize
+      updateCodingOptions();
+    </script>
+  </body>
+</html>
